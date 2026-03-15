@@ -195,7 +195,7 @@
                         
                         <!-- AI Verification Log Snippet -->
                         <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> URLs strictly verified via real-time search
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> URLs strictly verified via real-time search operators
                         </div>
                     </div>
                     
@@ -362,7 +362,7 @@
         el.targetUrl.addEventListener('keypress', e => { if (e.key === 'Enter') handleAnalyze(); });
         el.analyzeBtn.addEventListener('click', handleAnalyze);
 
-        // API Call with Exact Retry Logic from React App
+        // API Call with Exact Retry Logic
         async function fetchWithRetry(url, options, attemptSearch = true, retries = 5) {
             const delays = [1000, 2000, 4000, 8000, 16000];
             
@@ -444,19 +444,20 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = "Extracting Signals...";
+                el.loadingMessage.textContent = "Deep Scraping & Verifying URLs...";
 
-                // --- THE ADVANCED PROMPT ---
+                // --- PROMPT SIÊU NGHIÊM NGẶT VỀ URL ---
                 const systemPrompt = `
+YOU MUST USE THE GOOGLE SEARCH TOOL TO VERIFY ALL INFORMATION BEFORE GENERATING JSON.
 You are an Elite Web3 Revenue Operations Strategist and a Master Data Scraper for Spores Network.
-Your mandate is to conduct a forensic, data-driven analysis of the target Web3 project using Google Search.
 
-CRITICAL DATA EXTRACTION RULES (CHAIN OF THOUGHT REQUIRED):
-You MUST act like a web scraper. Do not rely on your pre-trained memory.
-1. Use Google Search to find the exact Official Handle/Link first.
-2. If the user provides an X/Twitter link, you MUST look up that exact profile and read its Bio to find the accurate website domain (e.g., check if it's .net, .io, .xyz).
-3. For Discord/Telegram: Only provide links explicitly verified from their official site or bio snippet. If not found, output "N/A".
-4. To prove you didn't hallucinate, you MUST write down your search findings in the 'verificationLog' array FIRST before filling out the rest of the JSON.
+CRITICAL ANTI-HALLUCINATION PROTOCOL (READ CAREFULLY):
+You are strictly forbidden from guessing, fabricating, or assuming ANY URLs.
+1. If the input is an X/Twitter link: You MUST search Google for that exact profile and read its Bio/Linktree to find the EXACT website domain (e.g. check if it's .net, .io, .com). DO NOT assume the domain.
+2. If the input is a Website: You MUST search Google for the website domain to find their official X/Twitter handle.
+3. For Discord: You MUST search "site:discord.com/invite [Project Name]". If you don't find a working invite link in the search snippets, output "N/A". NEVER output placeholder links like "discord.gg/projectname".
+4. For Telegram: You MUST search "site:t.me [Project Name]". If not found in snippets, output "N/A".
+5. To prove you didn't hallucinate, you MUST log your exact search queries and findings in the 'verificationLog' array.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -507,17 +508,22 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                // Cập nhật User Query
-                const userQuery = `Target Project: ${targetUrl}\n\nEXECUTE THIS COMPREHENSIVE SEARCH PLAN BEFORE ANSWERING:
-1. Search Google to verify the exact Twitter, Discord, and Telegram handles.
-2. If an X/Twitter link was provided, search for its exact bio to find the real website domain.
-3. LOG your findings in the 'verificationLog' array to prove you checked the facts, then fill out the rest of the JSON. Do not hallucinate generic discord.gg links.`;
+                // Cập nhật User Query ép chạy lệnh Search
+                const userQuery = `Target Project: ${targetUrl}
+
+MANDATORY FIRST STEP - EXECUTE THESE EXACT SEARCHES BEFORE ANSWERING:
+1. If ${targetUrl} is a website, search: "[Website Name] official twitter"
+2. If ${targetUrl} is a twitter, search: "[Twitter Handle] official website"
+3. Search: "site:discord.com/invite [Project Name]"
+4. Search: "site:t.me [Project Name]"
+
+Only after verifying these exact links via search snippets should you proceed to score the dimensions and write the blurb. Do not hallucinate links!`;
 
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: 0.2, // Giảm temperature để thông tin chính xác như scraper
+                        temperature: 0.1, // Nhiệt độ cực thấp để cấm AI sáng tạo số liệu/URL
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
@@ -533,10 +539,10 @@ Return strictly JSON matching the required schema.
                                 socialLinks: {
                                     type: "OBJECT",
                                     properties: {
-                                        website: { type: "STRING" },
-                                        twitter: { type: "STRING" },
-                                        telegram: { type: "STRING" },
-                                        discord: { type: "STRING" }
+                                        website: { type: "STRING", description: "Verified Website URL. If not explicitly verified, output N/A." },
+                                        twitter: { type: "STRING", description: "Verified Twitter URL. If not explicitly verified, output N/A." },
+                                        telegram: { type: "STRING", description: "Verified Telegram URL. If not explicitly verified, output N/A." },
+                                        discord: { type: "STRING", description: "Verified Discord Invite URL. If not explicitly verified, output N/A." }
                                     }
                                 },
                                 scores: {
@@ -582,6 +588,7 @@ Return strictly JSON matching the required schema.
                 if (textOutput) {
                     const resultData = JSON.parse(textOutput);
                     displayResults(resultData);
+                    console.log("Verification Log:", resultData.verificationLog); // Log để kiểm tra AI search ra gì
                 } else {
                     throw new Error('Failed to parse AI output. Try again.');
                 }
