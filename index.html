@@ -149,7 +149,7 @@
                 Data-Driven <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-blue-500">Signal-Based Selling.</span>
             </h2>
             <p class="text-slate-400 mb-8 text-lg max-w-2xl mx-auto font-medium">
-                Input a Web3 project Website (Recommended) or Twitter. Our AI Strategist will forensically analyze their vulnerabilities and generate a hyper-personalized outreach blurb.
+                Input a Web3 project Website (Recommended). Our AI Strategist will strictly extract data from the site, analyze vulnerabilities, and generate a personalized blurb.
             </p>
 
             <!-- Toggle Search Mode -->
@@ -157,8 +157,8 @@
                 <label class="relative inline-flex items-center cursor-pointer group">
                     <input type="checkbox" id="useSearchToggle" class="sr-only peer" checked>
                     <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Search để cào dữ liệu trực tiếp từ tên miền Website dự án.">
-                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Deep Search (Quét siêu chuẩn xác từ Website)
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Ép AI phải truy cập trực tiếp Website để trích xuất link chính xác 100%.">
+                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Strict Scraper (Bắt buộc quét trực tiếp Website)
                     </span>
                 </label>
             </div>
@@ -169,7 +169,7 @@
                     <input
                         type="text"
                         id="targetUrl"
-                        placeholder="e.g. https://yom.net/ (Ưu tiên link Website) hoặc Twitter"
+                        placeholder="e.g. https://www.kimanilife.com/ (Ưu tiên nhập link Website)"
                         class="w-full bg-transparent py-4 px-4 text-white placeholder-slate-600 focus:outline-none text-base"
                     />
                 </div>
@@ -220,7 +220,7 @@
                         
                         <!-- AI Verification Log Snippet -->
                         <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10" id="resLogContainer">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Website Domain Scraped & Verified</span>
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Website DOM Scraped & URLs Extracted</span>
                         </div>
                     </div>
                     
@@ -428,7 +428,7 @@
             hideError();
             el.resultsContainer.classList.add('hidden');
             
-            if (!targetUrl) return showError('Thiếu thông tin dự án', 'Vui lòng nhập link Website hoặc Twitter.');
+            if (!targetUrl) return showError('Thiếu thông tin dự án', 'Vui lòng nhập link Website (khuyên dùng) hoặc Twitter.');
             if (!apiKey) return showError('Thiếu API Key', 'Vui lòng dán Gemini API Key ở góc trên bên phải.');
 
             // UI Loading State
@@ -455,22 +455,22 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = useSearch ? "Đang quét Domain dự án..." : "Phân tích bằng trí nhớ AI...";
+                el.loadingMessage.textContent = useSearch ? "Strict Scraping URLs..." : "Phân tích bằng trí nhớ AI...";
 
-                // --- SYSTEM PROMPT: TỐI THƯỢNG HÓA KỸ NĂNG SCRAPE THEO WEBSITE ---
+                // --- SYSTEM PROMPT: KỶ LUẬT THÉP VỀ TRÍCH XUẤT (EXTRACT), CẤM TẠO (GENERATE) ---
                 const systemPrompt = `
-You are an Elite Web3 Revenue Operations Strategist and a STRICT Data Scraper for Spores Network.
-YOUR CORE EXPERTISE IS DOMAIN-SPECIFIC DATA EXTRACTION.
+You are an Elite Web3 Revenue Operations Strategist and a STRICT DATA SCRAPER for Spores Network.
+YOUR CORE EXPERTISE IS EXACT URL EXTRACTION FROM WEBSITES.
 
-CRITICAL ANTI-HALLUCINATION PROTOCOL FOR SOCIAL LINKS (ZERO GUESSING TOLERATED):
-1. NEVER guess or construct social URLs (e.g., if you don't find it, DO NOT invent "x.com/project_name").
-2. Example of FORBIDDEN behavior: The project is "YOM". You guess the Twitter is "https://x.com/yom_metaverse". THIS IS STRICTLY PROHIBITED AND WILL FAIL THE AUDIT.
-3. THE RULE OF DOMAIN EXTRACTION: If the user provides a Website URL (e.g., https://yom.net/): 
-   - You MUST extract the official Twitter, Discord, and Telegram links directly from that specific website's content/footprint.
-   - If you cannot find the EXACT link via Google Search tied directly to that domain (e.g., by searching "site:yom.net x.com"), you MUST output "N/A".
-4. If the user provides an X/Twitter URL: First, find their official website from their bio. Then, apply Rule 3.
-5. Always prefer "N/A" over an unverified, guessed link.
-6. Log your exact search queries and the exact URLs found in 'verificationLog'.
+CRITICAL ANTI-HALLUCINATION PROTOCOL (ZERO GUESSING TOLERATED):
+1. You are strictly forbidden from generating, guessing, or constructing social URLs.
+2. If the user provides a Website URL (e.g., https://www.kimanilife.com/): 
+   - You MUST use your search/browsing capability to READ the actual content/homepage of that specific website.
+   - EXTRACT ONLY the exact URLs (Twitter, Discord, Telegram) that are physically written/linked on that page.
+   - Example: If the site links to "x.com/Kimani_Life", extract exactly "https://x.com/Kimani_Life". Do NOT invent "x.com/KimaniLife".
+   - If you cannot find the EXACT link written on the site, you MUST output "N/A".
+3. Always prefer "N/A" over an unverified, guessed link.
+4. Log your exact extraction process and the EXACT URLs you found in 'verificationLog'.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -521,25 +521,14 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                // Logic tự tách Tên miền để search cho chuẩn
-                let parsedDomain = targetUrl;
-                try {
-                    let tempUrl = targetUrl;
-                    if (!tempUrl.startsWith('http')) tempUrl = 'https://' + tempUrl;
-                    parsedDomain = new URL(tempUrl).hostname.replace('www.', '');
-                } catch(e) {}
-
                 let userQuery = `Target Project: ${targetUrl}\n`;
                 if (useSearch) {
-                    userQuery += `\nMANDATORY DOMAIN-STRICT RECONNAISSANCE (DO THIS FIRST):
-1. The target domain/identifier is: ${parsedDomain}.
-2. Use Google Search to find exact social links EXCLUSIVELY ON THIS SPECIFIC DOMAIN.
-   - Execute search: site:${parsedDomain} "x.com" OR "twitter.com"
-   - Execute search: site:${parsedDomain} "t.me" OR "telegram.me"
-   - Execute search: site:${parsedDomain} "discord.com/invite" OR "discord.gg"
-3. Read the search snippets carefully. ONLY extract the URLs that actually appear in the results for that specific domain.
-4. If a specific social link (e.g., Discord) does not appear in the search results for that domain, YOU MUST OUTPUT "N/A" for that link. DO NOT GUESS.
-Log the exact URLs you found and the search queries you used in verificationLog.`;
+                    userQuery += `\nMANDATORY EXACT EXTRACTION TASK:
+1. The target is: ${targetUrl}.
+2. Use your tools to access/search the content of ${targetUrl}.
+3. Read the text/links on that exact page or its official documentation. Find EXACT URLs containing "twitter.com/", "x.com/", "t.me/", "discord.gg/", or "discord.com/invite/".
+4. DO NOT GUESS THE HANDLE based on the brand name. If the exact URL is not found on the site, output "N/A".
+Log the exact URLs you extracted in verificationLog.`;
                 } else {
                     userQuery += `\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
                 }
@@ -548,7 +537,7 @@ Log the exact URLs you found and the search queries you used in verificationLog.
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: 0.1, // Nhiệt độ cực thấp để cấm AI sáng tạo số liệu/URL
+                        temperature: 0.0, // Nhiệt độ 0.0 để bắt AI làm máy trích xuất hoàn toàn (Regex mode)
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
@@ -556,7 +545,7 @@ Log the exact URLs you found and the search queries you used in verificationLog.
                                 verificationLog: {
                                     type: "ARRAY",
                                     items: { type: "STRING" },
-                                    description: "Log of how you found the data. E.g. 'Scanned website X, found link to discord.gg/Y'"
+                                    description: "Log of what URLs you explicitly found. E.g. 'Read homepage, extracted exactly https://x.com/Kimani_Life'"
                                 },
                                 projectName: { type: "STRING" },
                                 summary: { type: "STRING" },
@@ -663,7 +652,7 @@ Log the exact URLs you found and the search queries you used in verificationLog.
             
             if (useSearch) {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10";
-                el.resLogText.textContent = "Website Domain Scraped & Verified";
+                el.resLogText.textContent = "Website DOM Scraped & Exact URLs Extracted";
             } else {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-amber-400/80 bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-500/10";
                 el.resLogText.textContent = "Fast Mode: Verified via AI Memory (No Live Search)";
