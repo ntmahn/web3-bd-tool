@@ -149,7 +149,7 @@
                 Data-Driven <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-blue-500">Signal-Based Selling.</span>
             </h2>
             <p class="text-slate-400 mb-8 text-lg max-w-2xl mx-auto font-medium">
-                Input a Web3 project Website. Our AI Strategist will cross-reference the site with top Web3 databases (CryptoRank, RootData) to strictly extract verified data and generate a personalized blurb.
+                Input a Web3 project Website. Our AI Strategist will exhaustively scan the site's DOM to extract verified links, analyze vulnerabilities, and generate a personalized blurb.
             </p>
 
             <!-- Toggle Search Mode -->
@@ -157,8 +157,8 @@
                 <label class="relative inline-flex items-center cursor-pointer group">
                     <input type="checkbox" id="useSearchToggle" class="sr-only peer" checked>
                     <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng kết hợp Website + CryptoRank/RootData để lấy link chính xác tuyệt đối.">
-                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Multi-Source Scraper (Web + CryptoRank/RootData)
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Grounding để truy cập và đọc trực tiếp mã nguồn website dự án.">
+                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Exhaustive Web Scraper (Ép AI đọc mã nguồn Web)
                     </span>
                 </label>
             </div>
@@ -194,7 +194,7 @@
                     <p id="errorSubMessage" class="text-slate-400 text-sm mt-1"></p>
                     <div id="errorAction" class="mt-3 hidden">
                         <button onclick="document.getElementById('useSearchToggle').click();" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/30 transition-colors font-medium">
-                            Tắt Multi-Source Search và thử lại (Chế độ Lite)
+                            Tắt Deep Search và thử lại (Chế độ Lite)
                         </button>
                     </div>
                 </div>
@@ -455,22 +455,22 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = useSearch ? "Multi-Source Scraping..." : "Phân tích bằng trí nhớ AI...";
+                el.loadingMessage.textContent = useSearch ? "Exhaustively Scanning Website..." : "Phân tích bằng trí nhớ AI...";
 
-                // --- SYSTEM PROMPT: TÍCH HỢP QUÉT CHÉO BẰNG DATABASE THỨ 3 (CRYPTORANK, ROOTDATA) ---
+                // --- SYSTEM PROMPT: KỶ LUẬT THÉP VỀ QUÉT WEBSITE & TRÍCH XUẤT ---
                 const systemPrompt = `
-You are an Elite Web3 Revenue Operations Strategist and a STRICT DATA SCRAPER for Spores Network.
-YOUR CORE EXPERTISE IS EXACT URL EXTRACTION USING MULTI-SOURCE RECONNAISSANCE.
+You are an Elite Web3 Revenue Operations Strategist and an AGGRESSIVE WEB SCRAPER for Spores Network.
+Your ultimate core capability is to fetch, read, and extract data from websites precisely.
 
-CRITICAL ANTI-HALLUCINATION PROTOCOL (ZERO GUESSING TOLERATED - READ CAREFULLY):
-1. You are strictly forbidden from generating, guessing, or constructing social URLs. (e.g., adding "x.com/" to the project name is a FIREABLE OFFENSE).
-2. THE MULTI-SOURCE RECONNAISSANCE RULE: 
-   - Some Web3 websites block crawlers or use JS to hide links. If the user provides a Website URL (e.g., https://www.kimanilife.com/), you must FIRST try to read the website.
-   - If the direct website search is inconclusive or you cannot find the EXACT link written there, you MUST use Google Search to cross-reference with top Web3 databases.
-   - Specifically search: "[Project Name] official twitter site:cryptorank.io OR site:rootdata.com OR site:coinmarketcap.com OR site:dropstab.com OR linktr.ee".
-3. Cross-reference the data. Extract the EXACT URL listed on these trusted Web3 platforms. Example: If CryptoRank lists "https://x.com/Kimani_Life", YOU EXTRACT EXACTLY THAT. Do NOT invent "x.com/KimaniLife".
-4. If the link cannot be explicitly verified from the official site OR a trusted Web3 database, output "N/A". Always prefer "N/A" over a guessed link.
-5. Log your exact extraction process, the databases you searched, and the EXACT URLs found in 'verificationLog'.
+CRITICAL DATA EXTRACTION PROTOCOL (ZERO GUESSING TOLERATED):
+1. EXHAUSTIVE PAGE SCAN: When the user provides a Website URL, you MUST use your browsing/search capabilities to access and READ THE EXACT PAGE CONTENT of that URL. The social links (Twitter, Discord, Telegram) are almost always in the header, footer, or "Community" sections.
+2. EXTRACT, DO NOT INVENT: Scan the retrieved content specifically for 'href' targets or raw text containing:
+   - "x.com/" or "twitter.com/"
+   - "t.me/" or "telegram.me/"
+   - "discord.gg/" or "discord.com/invite/"
+3. NO LAZY "N/A"s: If the user gave you a website, do NOT immediately default to "N/A" without thoroughly scanning the URL. It is a critical failure if you say "N/A" when the link actually exists on the page.
+4. MULTI-SOURCE FALLBACK: ONLY if the website is completely inaccessible or truly hides the links behind unreadable JS, you MUST fallback to searching Google for "[Project Name] official links site:linktr.ee OR site:cryptorank.io OR site:rootdata.com".
+5. DO NOT HALLUCINATE: You must extract the full URL EXACTLY as it appears. Do not guess it. Do not format it yourself.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -521,25 +521,28 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                let userQuery = `Target Project: ${targetUrl}\n`;
+                let userQuery = "";
                 if (useSearch) {
-                    userQuery += `\nMANDATORY MULTI-SOURCE EXTRACTION TASK:
-1. The target is: ${targetUrl}. Determine the core project name.
-2. EXECUTE SEARCHES TO VERIFY SOCIAL LINKS (DO NOT GUESS!):
-   - First, scan the content of ${targetUrl} directly.
-   - SECOND (CRITICAL): Cross-verify by searching Google: "[Project Name] official twitter discord telegram site:cryptorank.io OR site:rootdata.com OR site:dropstab.com OR site:coinmarketcap.com OR linktr.ee".
-3. Read the search snippets from these trusted databases. Find the EXACT URLs containing "twitter.com/", "x.com/", "t.me/", "discord.gg/", or "discord.com/invite/".
-4. If a link is not found explicitly in the website or a trusted directory, output "N/A".
-Log the exact sources (e.g., 'Found on CryptoRank') and URLs you extracted in verificationLog.`;
+                    userQuery += `VISIT AND READ THIS EXACT URL: ${targetUrl}
+
+CRITICAL EXTRACTION DIRECTIVE (READ CAREFULLY):
+1. BROWSE THE EXACT URL: You MUST use your tools to access and deeply read the actual content/source of ${targetUrl}. Do NOT just rely on Google search snippets. Read the website's headers and footers.
+2. REGEX-LIKE SCAN: Scan the entire page content for ANY URLs containing:
+   - "x.com/" or "twitter.com/"
+   - "t.me/" or "telegram.me/"
+   - "discord.gg/" or "discord.com/invite/"
+3. FALLBACK: Only if the website completely blocks you, search "[Project Name] official links site:linktr.ee OR site:cryptorank.io OR site:rootdata.com".
+4. EXTRACT EXACTLY WHAT YOU SEE. DO NOT GUESS.
+Log the exact URLs you extracted and where you found them (e.g. "Found in website footer") in verificationLog.`;
                 } else {
-                    userQuery += `\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
+                    userQuery += `Target Project: ${targetUrl}\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
                 }
 
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: 0.0, // Nhiệt độ 0.0 để bắt AI làm máy trích xuất hoàn toàn
+                        temperature: useSearch ? 0.2 : 0.4, // Nhiệt độ 0.2 giúp AI không quá cứng nhắc mà bỏ qua việc đọc website
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
@@ -547,7 +550,7 @@ Log the exact sources (e.g., 'Found on CryptoRank') and URLs you extracted in ve
                                 verificationLog: {
                                     type: "ARRAY",
                                     items: { type: "STRING" },
-                                    description: "Log of what URLs you explicitly found and WHERE. E.g. 'Found exact Twitter x.com/Kimani_Life on CryptoRank'"
+                                    description: "Log of what URLs you explicitly found and WHERE. E.g. 'Scanned website homepage footer, extracted exact Twitter: https://x.com/Kimani_Life'"
                                 },
                                 projectName: { type: "STRING" },
                                 summary: { type: "STRING" },
@@ -654,7 +657,7 @@ Log the exact sources (e.g., 'Found on CryptoRank') and URLs you extracted in ve
             
             if (useSearch) {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10";
-                el.resLogText.textContent = "Verified via Website & Web3 Databases (CryptoRank/RootData)";
+                el.resLogText.textContent = "Exhaustive Web Scan Completed";
             } else {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-amber-400/80 bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-500/10";
                 el.resLogText.textContent = "Fast Mode: Verified via AI Memory (No Live Search)";
