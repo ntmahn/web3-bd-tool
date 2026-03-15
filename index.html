@@ -157,8 +157,8 @@
                 <label class="relative inline-flex items-center cursor-pointer group">
                     <input type="checkbox" id="useSearchToggle" class="sr-only peer" checked>
                     <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Search để cào dữ liệu từ Website dự án.">
-                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Deep Search (Quét sâu Website chính thức)
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Search để cào dữ liệu trực tiếp từ tên miền Website dự án.">
+                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Deep Search (Quét siêu chuẩn xác từ Website)
                     </span>
                 </label>
             </div>
@@ -220,7 +220,7 @@
                         
                         <!-- AI Verification Log Snippet -->
                         <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10" id="resLogContainer">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Website Content Scraped & Verified</span>
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Website Domain Scraped & Verified</span>
                         </div>
                     </div>
                     
@@ -455,19 +455,22 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = useSearch ? "Đang quét Website dự án..." : "Phân tích bằng trí nhớ AI...";
+                el.loadingMessage.textContent = useSearch ? "Đang quét Domain dự án..." : "Phân tích bằng trí nhớ AI...";
 
-                // --- SYSTEM PROMPT TẬP TRUNG VÀO WEBSITE-FIRST ---
+                // --- SYSTEM PROMPT: TỐI THƯỢNG HÓA KỸ NĂNG SCRAPE THEO WEBSITE ---
                 const systemPrompt = `
-You are an Elite Web3 Revenue Operations Strategist and Data Scraper for Spores Network.
-YOUR CORE EXPERTISE IS WEBSITE ANALYSIS. You must leverage your ability to read website content.
+You are an Elite Web3 Revenue Operations Strategist and a STRICT Data Scraper for Spores Network.
+YOUR CORE EXPERTISE IS DOMAIN-SPECIFIC DATA EXTRACTION.
 
-CRITICAL ANTI-HALLUCINATION PROTOCOL (WEBSITE-FIRST STRATEGY):
-1. THE OFFICIAL WEBSITE IS THE ULTIMATE SOURCE OF TRUTH.
-2. If the user provides a Website URL: You must focus your search and extraction ENTIRELY on that specific domain. Find their exact Twitter, Discord, and Telegram by looking for links associated with that specific domain. Use queries like "site:[their_domain] twitter.com", "site:[their_domain] t.me", "site:[their_domain] discord.com/invite".
-3. If the user provides an X/Twitter URL: First, find their official website from their bio. Then, apply Rule 2.
-4. NEVER guess a Discord or Telegram link (e.g., do NOT just output "discord.gg/projectname"). If a link is not explicitly found ON their official website or verified linktree, you MUST output "N/A".
-5. Log your exact search queries and findings in 'verificationLog'.
+CRITICAL ANTI-HALLUCINATION PROTOCOL FOR SOCIAL LINKS (ZERO GUESSING TOLERATED):
+1. NEVER guess or construct social URLs (e.g., if you don't find it, DO NOT invent "x.com/project_name").
+2. Example of FORBIDDEN behavior: The project is "YOM". You guess the Twitter is "https://x.com/yom_metaverse". THIS IS STRICTLY PROHIBITED AND WILL FAIL THE AUDIT.
+3. THE RULE OF DOMAIN EXTRACTION: If the user provides a Website URL (e.g., https://yom.net/): 
+   - You MUST extract the official Twitter, Discord, and Telegram links directly from that specific website's content/footprint.
+   - If you cannot find the EXACT link via Google Search tied directly to that domain (e.g., by searching "site:yom.net x.com"), you MUST output "N/A".
+4. If the user provides an X/Twitter URL: First, find their official website from their bio. Then, apply Rule 3.
+5. Always prefer "N/A" over an unverified, guessed link.
+6. Log your exact search queries and the exact URLs found in 'verificationLog'.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -518,14 +521,25 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                let userQuery = `Target Project Link: ${targetUrl}\n`;
+                // Logic tự tách Tên miền để search cho chuẩn
+                let parsedDomain = targetUrl;
+                try {
+                    let tempUrl = targetUrl;
+                    if (!tempUrl.startsWith('http')) tempUrl = 'https://' + tempUrl;
+                    parsedDomain = new URL(tempUrl).hostname.replace('www.', '');
+                } catch(e) {}
+
+                let userQuery = `Target Project: ${targetUrl}\n`;
                 if (useSearch) {
-                    userQuery += `\nEXECUTE THIS SEARCH STRATEGY BEFORE ANSWERING:
-1. Identify the official website of the project from the link provided.
-2. Focus entirely on extracting social links (Twitter, Discord, Telegram) DIRECTLY from that official website's footprint.
-3. Use the Google Search tool to verify by searching WITHIN their domain (e.g., searching "site:[their_website_domain] t.me" or "site:[their_website_domain] discord.com/invite").
-4. If a link isn't explicitly tied to their official site, output "N/A". Do not guess.
-Log your steps in verificationLog.`;
+                    userQuery += `\nMANDATORY DOMAIN-STRICT RECONNAISSANCE (DO THIS FIRST):
+1. The target domain/identifier is: ${parsedDomain}.
+2. Use Google Search to find exact social links EXCLUSIVELY ON THIS SPECIFIC DOMAIN.
+   - Execute search: site:${parsedDomain} "x.com" OR "twitter.com"
+   - Execute search: site:${parsedDomain} "t.me" OR "telegram.me"
+   - Execute search: site:${parsedDomain} "discord.com/invite" OR "discord.gg"
+3. Read the search snippets carefully. ONLY extract the URLs that actually appear in the results for that specific domain.
+4. If a specific social link (e.g., Discord) does not appear in the search results for that domain, YOU MUST OUTPUT "N/A" for that link. DO NOT GUESS.
+Log the exact URLs you found and the search queries you used in verificationLog.`;
                 } else {
                     userQuery += `\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
                 }
@@ -620,6 +634,7 @@ Log your steps in verificationLog.`;
                 if (textOutput) {
                     const resultData = JSON.parse(textOutput);
                     displayResults(resultData, useSearch);
+                    console.log("Verification Log:", resultData.verificationLog);
                 } else {
                     throw new Error('Lỗi trích xuất dữ liệu AI. Hãy thử lại.');
                 }
