@@ -131,9 +131,9 @@
                     <span id="analyzeText" class="flex items-center gap-2">
                         Phân tích ngay <i data-lucide="chevron-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
                     </span>
-                    <span id="loadingState" class="hidden items-center gap-2">
-                        <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        Đang xử lý...
+                    <span id="loadingState" class="hidden items-center gap-2 text-sm font-medium">
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span id="loadingMessage">Đang xử lý...</span>
                     </span>
                 </button>
             </div>
@@ -241,6 +241,7 @@
         const analyzeBtn = document.getElementById('analyzeBtn');
         const analyzeText = document.getElementById('analyzeText');
         const loadingState = document.getElementById('loadingState');
+        const loadingMessage = document.getElementById('loadingMessage');
         const errorContainer = document.getElementById('errorContainer');
         const errorMessage = document.getElementById('errorMessage');
         const errorSubMessage = document.getElementById('errorSubMessage');
@@ -262,48 +263,50 @@
         let currentSaleBlurb = "";
         let availableModelsFetched = false;
 
-        // Tính năng Tự Động Load Danh sách Model dựa vào API Key
+        // Hàm Tự Động Quét Danh sách Model được phép dùng
+        async function fetchValidModels(apiKey) {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            if (!response.ok) throw new Error("API Key không hợp lệ hoặc bị chặn.");
+            
+            const data = await response.json();
+            
+            // Lọc ra các model hỗ trợ sinh văn bản, thuộc nhánh gemini, bỏ qua model cũ/lỗi
+            const validModels = data.models.filter(m => 
+                m.supportedGenerationMethods?.includes('generateContent') && 
+                m.name.includes('gemini') && 
+                !m.name.includes('vision') &&
+                !m.name.includes('experimental')
+            );
+
+            if (validModels.length === 0) {
+                throw new Error("Không tìm thấy model AI nào hỗ trợ sinh văn bản cho API Key này.");
+            }
+            return validModels;
+        }
+
+        // Bắt sự kiện người dùng nhập xong API key
         apiKeyInput.addEventListener('change', async function() {
             const apiKey = apiKeyInput.value.trim();
             if (!apiKey) return;
             
             try {
-                // Lấy danh sách model mà API Key này ĐƯỢC PHÉP dùng
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-                if (!response.ok) throw new Error("API Key không hợp lệ.");
-                
-                const data = await response.json();
-                
-                // Lọc ra các model hỗ trợ generateContent (Văn bản) và thuộc nhánh gemini
-                const validModels = data.models.filter(m => 
-                    m.supportedGenerationMethods?.includes('generateContent') && 
-                    m.name.includes('gemini') && 
-                    !m.name.includes('vision') // Bỏ qua các model cũ chỉ chuyên ảnh
-                );
+                const validModels = await fetchValidModels(apiKey);
 
                 modelSelect.innerHTML = '';
-                
-                if (validModels.length === 0) {
-                    modelSelect.innerHTML = '<option value="">Không tìm thấy model nào</option>';
-                    return;
-                }
-
                 validModels.forEach(m => {
                     const opt = document.createElement('option');
-                    opt.value = m.name; // VD: "models/gemini-1.5-flash"
+                    opt.value = m.name; // VD: "models/gemini-1.5-flash-001"
                     opt.textContent = m.displayName || m.name.replace('models/', '');
                     modelSelect.appendChild(opt);
                 });
 
-                // Tự động chọn model tối ưu nhất cho Free Tier (gemini-1.5-flash-8b cực kì nhẹ và miễn phí cao)
+                // Chọn tự động model nhẹ/ổn định nhất để tối ưu quota
                 const preferred = validModels.find(m => m.name.includes('gemini-1.5-flash-8b')) 
                                || validModels.find(m => m.name.includes('gemini-1.5-flash'))
-                               || validModels[0];
+                               || validModels.find(m => m.name.includes('flash'))
+                               || validModels[0]; // Nếu không có, lấy model đầu tiên mà Google trả về hợp lệ!
                 
-                if (preferred) {
-                    modelSelect.value = preferred.name;
-                }
-
+                modelSelect.value = preferred.name;
                 modelSelect.classList.remove('hidden');
                 modelSelectIcon.classList.remove('hidden');
                 availableModelsFetched = true;
@@ -311,7 +314,7 @@
 
             } catch (err) {
                 console.error(err);
-                showError("Lỗi tải Models", "Vui lòng kiểm tra lại API Key. Nếu đúng, tài khoản của bạn có thể bị giới hạn truy cập.");
+                // Không báo lỗi quá gắt ở bước này, để xử lý khi người dùng bấm nút
             }
         });
 
@@ -324,9 +327,9 @@
 
         analyzeBtn.addEventListener('click', handleAnalyze);
 
-        // Hàm gọi API với cơ chế Tự Động Thử Lại (Fallback Retry)
+        // Hàm gọi API sinh nội dung (Có cơ chế tự động thử lại khi không hỗ trợ Search)
         async function fetchWithRetry(apiKey, modelPath, payload, attemptSearch = true) {
-            // Nếu lần thử đầu tiên, gán Google Search tool. Nếu retry, bỏ tool đi để tránh lỗi model ko support.
+            // Nếu là lần đầu tiên, dùng Google Search. Nếu retry, bỏ tool đi.
             if (attemptSearch) {
                 payload.tools = [{ google_search: {} }];
             } else {
@@ -343,23 +346,18 @@
                 const errData = await response.json();
                 const errorMsg = errData.error?.message || "Lỗi không xác định";
 
-                // Xử lý lỗi: Model được chọn không hỗ trợ công cụ Search
+                // Model không hỗ trợ công cụ -> Tự động thử lại không cần Search
                 if (attemptSearch && (errorMsg.toLowerCase().includes('tool') || errorMsg.toLowerCase().includes('not supported') || errorMsg.toLowerCase().includes('google_search'))) {
-                    console.warn(`Model ${modelPath} không hỗ trợ Google Search. Đang thử lại không dùng công cụ...`);
-                    return await fetchWithRetry(apiKey, modelPath, payload, false); // Đệ quy thử lại lần 2
+                    console.warn(`Model ${modelPath} từ chối công cụ Search. Đang thử lại mặc định...`);
+                    return await fetchWithRetry(apiKey, modelPath, payload, false); 
                 }
 
-                // Xử lý lỗi: Quota Exceeded (Hết giới hạn)
+                // Hết giới hạn (Quota Limit)
                 if (response.status === 429 || errorMsg.toLowerCase().includes('quota')) {
-                    throw new Error("API Key của bạn đã bị giới hạn (Quota Exceeded). Vui lòng CHỌN MODEL KHÁC ở danh sách xổ xuống phía trên bên phải (Gợi ý: chọn gemini-1.5-flash-8b).");
+                    throw new Error("API Key đã hết hạn mức (Quota Exceeded). Hãy chọn Model AI khác trong danh sách ở trên.");
                 }
 
-                // Lỗi Not Found Model
-                if (response.status === 404 || errorMsg.toLowerCase().includes('not found')) {
-                    throw new Error(`Model này đã bị Google vô hiệu hóa hoặc API Key của bạn chưa được cấp quyền truy cập. Vui lòng CHỌN MODEL KHÁC.`);
-                }
-
-                throw new Error(`Lỗi API: ${errorMsg}`);
+                throw new Error(`Mã lỗi API: ${errorMsg}`);
             }
 
             return await response.json();
@@ -382,73 +380,95 @@
                 return;
             }
 
-            let selectedModel = modelSelect.value;
-            // Nếu user chưa đợi load xong model mà đã bấm, mặc định chọn 1 model an toàn
-            if (!selectedModel) selectedModel = 'models/gemini-1.5-flash-8b'; 
-
-            // Hiển thị trạng thái loading
+            // Bật Loading
             analyzeBtn.disabled = true;
             analyzeText.classList.add('hidden');
             loadingState.classList.remove('hidden');
             loadingState.classList.add('flex');
 
-            const systemPrompt = `
-              Bạn là một chuyên gia Business Development (BD) và Chiến lược gia Web3 xuất sắc làm việc tại một Web3 Marketing & Growth Agency hàng đầu.
-              Nhiệm vụ của bạn là nghiên cứu một dự án Web3 dựa trên URL/Social Link được cung cấp, tìm ra điểm yếu (pain points) của họ, và đề xuất các gói dịch vụ phù hợp nhất để bán cho họ.
-              
-              CÁC GÓI DỊCH VỤ AGENCY CỦA TÔI BAO GỒM (CHỈ ĐƯỢC CHỌN TỪ DANH SÁCH NÀY):
-              1. STAKING POOL (Giảm lực xả token, giữ chân holder)
-              2. User growth-hacking & community management (Tăng user thật, quản lý Discord/Telegram)
-              3. Top tiers KOL activation & shilling (Đẩy FOMO qua mạng lưới KOL/Alpha Caller)
-              4. Viral & brand marketing campaign (Tạo trend, chiến dịch airdrop/quest)
-              5. PR booking & distribution across top media (Lên báo lớn như CoinTelegraph, CoinDesk...)
-
-              QUY TRÌNH THỰC HIỆN:
-              1. Dùng kiến thức và Google Search (nếu có thể) để tìm thông tin về dự án (họ làm gì, token đã ra mắt chưa, cộng đồng thế nào).
-              2. Phân tích trạng thái hiện tại và tìm ra ÍT NHẤT 2-3 điểm yếu cốt lõi (ví dụ: công nghệ tốt nhưng không ai bàn luận, chuẩn bị TGE nhưng thiếu KOLs support).
-              3. Đề xuất 1-3 dịch vụ từ danh sách trên để giải quyết chính xác các điểm yếu đó. Giải thích ngắn gọn TẠI SAO.
-              4. Viết một đoạn "Sale Blurb" (tin nhắn cold outreach) bằng tiếng Anh để tôi gửi cho Founder/CMO dự án qua Telegram/Twitter. 
-                 - Yêu cầu Sale Blurb: Ngắn gọn, đánh trúng tim đen (pain point), thể hiện sự am hiểu về dự án của họ, và đưa ra call-to-action nhẹ nhàng. Không dùng văn mẫu AI sáo rỗng.
-
-              TRẢ VỀ KẾT QUẢ ĐÚNG ĐỊNH DẠNG JSON. Không giải thích thêm.
-            `;
-
-            const userQuery = `Hãy phân tích dự án tại link sau và đưa ra chiến lược BD: ${targetUrl}`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    temperature: 0.7,
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            projectName: { type: "STRING" },
-                            summary: { type: "STRING" },
-                            currentStage: { type: "STRING" },
-                            painPoints: { type: "ARRAY", items: { type: "STRING" } },
-                            recommendedServices: {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        serviceName: { type: "STRING" },
-                                        reason: { type: "STRING" }
-                                    }
-                                }
-                            },
-                            saleBlurb: { type: "STRING" }
-                        },
-                        required: ["projectName", "summary", "currentStage", "painPoints", "recommendedServices", "saleBlurb"]
-                    }
-                }
-            };
-
             try {
-                // Gọi hàm trung gian để tự động bắt lỗi và retry
-                const data = await fetchWithRetry(apiKey, selectedModel, payload, true);
+                let selectedModel = modelSelect.value;
                 
+                // NẾU NGƯỜI DÙNG BẤM NGAY MÀ CHƯA KỊP LOAD MODEL, ÉP CHẠY LẤY MODEL ĐỂ ĐẢM BẢO CHÍNH XÁC 100%
+                if (!selectedModel || selectedModel === "") {
+                    loadingMessage.textContent = "Đang kiểm tra quyền hạn API Key...";
+                    const validModels = await fetchValidModels(apiKey);
+                    
+                    // Nạp vào dropdown
+                    modelSelect.innerHTML = '';
+                    validModels.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.name;
+                        opt.textContent = m.displayName || m.name.replace('models/', '');
+                        modelSelect.appendChild(opt);
+                    });
+
+                    // Auto select the safest model
+                    const preferred = validModels.find(m => m.name.includes('gemini-1.5-flash-8b')) 
+                                   || validModels.find(m => m.name.includes('gemini-1.5-flash'))
+                                   || validModels[0];
+                    selectedModel = preferred.name;
+                    modelSelect.value = selectedModel;
+                    modelSelect.classList.remove('hidden');
+                    modelSelectIcon.classList.remove('hidden');
+                }
+
+                loadingMessage.textContent = "AI Đang nghiên cứu Web3...";
+
+                const systemPrompt = `
+                  Bạn là một chuyên gia Business Development (BD) và Chiến lược gia Web3 xuất sắc làm việc tại một Web3 Marketing & Growth Agency hàng đầu.
+                  Nhiệm vụ của bạn là nghiên cứu một dự án Web3 dựa trên URL/Social Link được cung cấp, tìm ra điểm yếu (pain points) của họ, và đề xuất các gói dịch vụ phù hợp nhất để bán cho họ.
+                  
+                  CÁC GÓI DỊCH VỤ AGENCY CỦA TÔI BAO GỒM (CHỈ ĐƯỢC CHỌN TỪ DANH SÁCH NÀY):
+                  1. STAKING POOL (Giảm lực xả token, giữ chân holder)
+                  2. User growth-hacking & community management (Tăng user thật, quản lý Discord/Telegram)
+                  3. Top tiers KOL activation & shilling (Đẩy FOMO qua mạng lưới KOL/Alpha Caller)
+                  4. Viral & brand marketing campaign (Tạo trend, chiến dịch airdrop/quest)
+                  5. PR booking & distribution across top media (Lên báo lớn như CoinTelegraph, CoinDesk...)
+
+                  QUY TRÌNH THỰC HIỆN:
+                  1. Dùng kiến thức và Google Search (nếu có thể) để tìm thông tin về dự án (họ làm gì, token đã ra mắt chưa, cộng đồng thế nào).
+                  2. Phân tích trạng thái hiện tại và tìm ra ÍT NHẤT 2-3 điểm yếu cốt lõi (ví dụ: công nghệ tốt nhưng không ai bàn luận, chuẩn bị TGE nhưng thiếu KOLs support).
+                  3. Đề xuất 1-3 dịch vụ từ danh sách trên để giải quyết chính xác các điểm yếu đó. Giải thích ngắn gọn TẠI SAO.
+                  4. Viết một đoạn "Sale Blurb" (tin nhắn cold outreach) bằng tiếng Anh để tôi gửi cho Founder/CMO dự án qua Telegram/Twitter. 
+                     - Yêu cầu Sale Blurb: Ngắn gọn, đánh trúng tim đen (pain point), thể hiện sự am hiểu về dự án của họ, và đưa ra call-to-action nhẹ nhàng. Không dùng văn mẫu AI sáo rỗng.
+
+                  TRẢ VỀ KẾT QUẢ ĐÚNG ĐỊNH DẠNG JSON. Không giải thích thêm.
+                `;
+
+                const userQuery = `Hãy phân tích dự án tại link sau và đưa ra chiến lược BD: ${targetUrl}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        temperature: 0.7,
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                projectName: { type: "STRING" },
+                                summary: { type: "STRING" },
+                                currentStage: { type: "STRING" },
+                                painPoints: { type: "ARRAY", items: { type: "STRING" } },
+                                recommendedServices: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            serviceName: { type: "STRING" },
+                                            reason: { type: "STRING" }
+                                        }
+                                    }
+                                },
+                                saleBlurb: { type: "STRING" }
+                            },
+                            required: ["projectName", "summary", "currentStage", "painPoints", "recommendedServices", "saleBlurb"]
+                        }
+                    }
+                };
+
+                const data = await fetchWithRetry(apiKey, selectedModel, payload, true);
                 const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (textOutput) {
@@ -460,7 +480,7 @@
 
             } catch (err) {
                 console.error(err);
-                showError("Đã có lỗi xảy ra", err.message);
+                showError("Lỗi hệ thống", err.message);
             } finally {
                 // Tắt trạng thái loading
                 analyzeBtn.disabled = false;
