@@ -149,7 +149,7 @@
                 Data-Driven <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-blue-500">Signal-Based Selling.</span>
             </h2>
             <p class="text-slate-400 mb-8 text-lg max-w-2xl mx-auto font-medium">
-                Input a Web3 project link. Our AI Strategist will forensically analyze their vulnerabilities across 5 dimensions and generate a hyper-personalized outreach blurb.
+                Input a Web3 project Website (Recommended) or Twitter. Our AI Strategist will forensically analyze their vulnerabilities and generate a hyper-personalized outreach blurb.
             </p>
 
             <!-- Toggle Search Mode -->
@@ -157,8 +157,8 @@
                 <label class="relative inline-flex items-center cursor-pointer group">
                     <input type="checkbox" id="useSearchToggle" class="sr-only peer" checked>
                     <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5">
-                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Bật Deep Search (Tốn Quota, dễ lỗi 429)
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Search để cào dữ liệu từ Website dự án.">
+                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Deep Search (Quét sâu Website chính thức)
                     </span>
                 </label>
             </div>
@@ -169,7 +169,7 @@
                     <input
                         type="text"
                         id="targetUrl"
-                        placeholder="e.g. https://x.com/monad_xyz or website URL"
+                        placeholder="e.g. https://yom.net/ (Ưu tiên link Website) hoặc Twitter"
                         class="w-full bg-transparent py-4 px-4 text-white placeholder-slate-600 focus:outline-none text-base"
                     />
                 </div>
@@ -180,7 +180,7 @@
                     <span id="analyzeText" class="flex items-center gap-2">
                         Run Audit <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
                     </span>
-                    <span id="loadingState" class="hidden items-center gap-2 text-sm">
+                    <span id="loadingState" class="hidden items-center gap-2 text-sm font-bold">
                         <div class="w-4 h-4 border-2 border-brand-dark/30 border-t-brand-dark rounded-full animate-spin"></div>
                         <span id="loadingMessage">Auditing...</span>
                     </span>
@@ -193,8 +193,8 @@
                     <p id="errorMessage" class="text-red-400 font-semibold"></p>
                     <p id="errorSubMessage" class="text-slate-400 text-sm mt-1"></p>
                     <div id="errorAction" class="mt-3 hidden">
-                        <button onclick="document.getElementById('useSearchToggle').click();" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/30 transition-colors">
-                            Tắt Deep Search và thử lại ngay
+                        <button onclick="document.getElementById('useSearchToggle').click();" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/30 transition-colors font-medium">
+                            Tắt Deep Search và thử lại (Chế độ Lite)
                         </button>
                     </div>
                 </div>
@@ -220,7 +220,7 @@
                         
                         <!-- AI Verification Log Snippet -->
                         <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10" id="resLogContainer">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Đã quét và phân tích</span>
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Website Content Scraped & Verified</span>
                         </div>
                     </div>
                     
@@ -440,7 +440,7 @@
             try {
                 let selectedModel = el.modelSelect.value;
                 if (!selectedModel) {
-                    el.loadingMessage.textContent = "Verifying API Key...";
+                    el.loadingMessage.textContent = "Xác thực API Key...";
                     const validModels = await fetchValidModels(apiKey);
                     el.modelSelect.innerHTML = '';
                     validModels.forEach(m => {
@@ -455,18 +455,19 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = useSearch ? "Deep Scraping URLs..." : "Phân tích bằng trí nhớ AI...";
+                el.loadingMessage.textContent = useSearch ? "Đang quét Website dự án..." : "Phân tích bằng trí nhớ AI...";
 
-                // --- SYSTEM PROMPT ---
+                // --- SYSTEM PROMPT TẬP TRUNG VÀO WEBSITE-FIRST ---
                 const systemPrompt = `
-You are an Elite Web3 Revenue Operations Strategist and Data Analyst for Spores Network.
-Your mandate is to conduct a forensic, data-driven analysis of the target Web3 project.
+You are an Elite Web3 Revenue Operations Strategist and Data Scraper for Spores Network.
+YOUR CORE EXPERTISE IS WEBSITE ANALYSIS. You must leverage your ability to read website content.
 
-CRITICAL ANTI-HALLUCINATION PROTOCOL:
-You are strictly forbidden from guessing, fabricating, or assuming ANY URLs.
-If you are completely unsure about an official URL (Twitter, Discord, Website, Telegram), output exactly "N/A".
-Do NOT output fake links like "discord.gg/projectname".
-If the user provides an exact URL in the prompt, extract and use that exact URL.
+CRITICAL ANTI-HALLUCINATION PROTOCOL (WEBSITE-FIRST STRATEGY):
+1. THE OFFICIAL WEBSITE IS THE ULTIMATE SOURCE OF TRUTH.
+2. If the user provides a Website URL: You must focus your search and extraction ENTIRELY on that specific domain. Find their exact Twitter, Discord, and Telegram by looking for links associated with that specific domain. Use queries like "site:[their_domain] twitter.com", "site:[their_domain] t.me", "site:[their_domain] discord.com/invite".
+3. If the user provides an X/Twitter URL: First, find their official website from their bio. Then, apply Rule 2.
+4. NEVER guess a Discord or Telegram link (e.g., do NOT just output "discord.gg/projectname"). If a link is not explicitly found ON their official website or verified linktree, you MUST output "N/A".
+5. Log your exact search queries and findings in 'verificationLog'.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -517,14 +518,14 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                let userQuery = `Target Project: ${targetUrl}\n`;
+                let userQuery = `Target Project Link: ${targetUrl}\n`;
                 if (useSearch) {
-                    userQuery += `\nMANDATORY FIRST STEP - USE SEARCH TOOL TO VERIFY LINKS:
-1. If ${targetUrl} is a website, search: "[Website Name] official twitter"
-2. If ${targetUrl} is a twitter, search: "[Twitter Handle] official website"
-3. Search: "site:discord.com/invite [Project Name]"
-4. Search: "site:t.me [Project Name]"
-Log your findings in verificationLog. Do not hallucinate!`;
+                    userQuery += `\nEXECUTE THIS SEARCH STRATEGY BEFORE ANSWERING:
+1. Identify the official website of the project from the link provided.
+2. Focus entirely on extracting social links (Twitter, Discord, Telegram) DIRECTLY from that official website's footprint.
+3. Use the Google Search tool to verify by searching WITHIN their domain (e.g., searching "site:[their_website_domain] t.me" or "site:[their_website_domain] discord.com/invite").
+4. If a link isn't explicitly tied to their official site, output "N/A". Do not guess.
+Log your steps in verificationLog.`;
                 } else {
                     userQuery += `\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
                 }
@@ -533,7 +534,7 @@ Log your findings in verificationLog. Do not hallucinate!`;
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: useSearch ? 0.1 : 0.4,
+                        temperature: 0.1, // Nhiệt độ cực thấp để cấm AI sáng tạo số liệu/URL
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
@@ -541,7 +542,7 @@ Log your findings in verificationLog. Do not hallucinate!`;
                                 verificationLog: {
                                     type: "ARRAY",
                                     items: { type: "STRING" },
-                                    description: "Log of how you found the data."
+                                    description: "Log of how you found the data. E.g. 'Scanned website X, found link to discord.gg/Y'"
                                 },
                                 projectName: { type: "STRING" },
                                 summary: { type: "STRING" },
@@ -597,7 +598,7 @@ Log your findings in verificationLog. Do not hallucinate!`;
                 } catch (apiError) {
                     if (apiError.message === "QUOTA_EXCEEDED") {
                         if (useSearch) {
-                            throw new Error("API Key đã hết hạn mức do dùng Deep Search. Hãy TẮT Deep Search ở nút bên trên để dùng chế độ phân tích siêu nhẹ (không giới hạn).");
+                            throw new Error("API Key đã hết hạn mức do dùng Deep Search. Hãy TẮT Deep Search ở nút bên trên để dùng chế độ phân tích siêu nhẹ (ít tốn API).");
                         } else {
                             throw new Error("API Key đã cạn kiệt hoàn toàn hạn mức. Vui lòng chọn Model khác (ví dụ: gemini-1.5-flash-8b) ở góc phải để tiếp tục.");
                         }
@@ -620,7 +621,7 @@ Log your findings in verificationLog. Do not hallucinate!`;
                     const resultData = JSON.parse(textOutput);
                     displayResults(resultData, useSearch);
                 } else {
-                    throw new Error('Failed to parse AI output. Try again.');
+                    throw new Error('Lỗi trích xuất dữ liệu AI. Hãy thử lại.');
                 }
 
             } catch (err) {
@@ -647,7 +648,7 @@ Log your findings in verificationLog. Do not hallucinate!`;
             
             if (useSearch) {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10";
-                el.resLogText.textContent = "URLs verified via Live Search Operators";
+                el.resLogText.textContent = "Website Domain Scraped & Verified";
             } else {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-amber-400/80 bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-500/10";
                 el.resLogText.textContent = "Fast Mode: Verified via AI Memory (No Live Search)";
