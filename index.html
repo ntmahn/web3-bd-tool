@@ -73,6 +73,21 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        
+        /* Custom styles for rendered blurb */
+        .blurb-text a {
+            color: #00E5FF;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .blurb-text a:hover {
+            text-decoration: underline;
+            opacity: 0.8;
+        }
+        .blurb-text strong {
+            color: #ffffff;
+            font-weight: 700;
+        }
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased selection:bg-brand-accent/30 selection:text-white flex flex-col">
@@ -242,20 +257,21 @@
                         </div>
                         <button
                             id="copyBtn"
-                            class="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all focus:ring-2 focus:ring-brand-accent/50"
+                            class="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all focus:ring-2 focus:ring-brand-accent/50 shadow-lg"
                         >
                             <i id="copyIcon" data-lucide="copy" class="w-4 h-4"></i>
-                            <span id="copyText">Copy Blurb</span>
+                            <span id="copyText">Copy Text</span>
                         </button>
                     </div>
                     
                     <div class="relative">
                         <!-- Mockup Avatar -->
-                        <div class="absolute -left-2 -top-2 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-brand-purple flex items-center justify-center shadow-lg hidden sm:flex">
-                            <span class="text-white text-xs font-bold">SP</span>
+                        <div class="absolute -left-2 -top-2 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-brand-purple flex items-center justify-center shadow-lg hidden sm:flex border-2 border-brand-card">
+                            <span class="text-white text-sm font-bold">SP</span>
                         </div>
-                        <div id="resSaleBlurb" class="sm:ml-10 bg-slate-900/50 border border-slate-800 p-6 rounded-2xl rounded-tl-sm text-slate-300 text-sm md:text-base leading-relaxed blurb-text font-medium font-sans">
-                            <!-- Blurb content here -->
+                        <!-- Blurb Container -->
+                        <div id="resSaleBlurb" class="sm:ml-12 bg-slate-900/40 border border-slate-700/50 p-6 rounded-2xl rounded-tl-sm text-slate-300 text-[15px] leading-relaxed blurb-text font-medium font-sans shadow-inner">
+                            <!-- Blurb content here dynamically parsed -->
                         </div>
                     </div>
                 </div>
@@ -413,7 +429,9 @@ Your mandate is to conduct a forensic, data-driven analysis of the target Web3 p
 Bypass superficial marketing claims. Dig into social graph, community health, and institutional credibility.
 
 Data Extraction Requirements:
-Extract verifiable social/documentation links (Website, X/Twitter, Telegram, Discord). If not found, use "N/A".
+- Extract verifiable social/documentation links (Website, X/Twitter, Telegram, Discord).
+- CRITICAL RULE: DO NOT guess or hallucinate URLs. If you cannot find the EXACT official link via search, output "N/A".
+- CRITICAL RULE: If the user provides an exact URL in the input (e.g., a Twitter link), you MUST extract and return that exact URL in the corresponding field (e.g., socialLinks.twitter). DO NOT change it.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -433,7 +451,10 @@ Match the vulnerabilities to our Exact Packages:
 5. PR booking & distribution across top media
 
 GENERATE ELITE OUTREACH BLURB:
-Using the pain points identified, generate a highly personalized B2B cold outreach copy based exactly on this Spores Network template structure:
+Using the pain points identified, generate a highly personalized B2B cold outreach copy based exactly on this Spores Network template structure.
+CRITICAL FORMATTING INSTRUCTION: Use clear spacing between paragraphs. Do not cram text together.
+
+Template structure to follow strictly:
 
 "Spores Network - operating as a top 10 global Launchpad, VC, Accelerator and Web3 Marketing Agency.
 We've been empowering Web3 projects for 8+ years, supporting $40M+ in fundraising, partnering with 200+ teams, and working with 3,000+ projects across DeFi, GameFi, NFT, Memecoins, and more.
@@ -556,8 +577,8 @@ Return data strictly in JSON format. Do not hallucinate.
                     const a = document.createElement('a');
                     a.href = url.startsWith('http') ? url : `https://${url}`;
                     a.target = "_blank";
-                    a.className = "flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-700/60 border border-slate-700/50 hover:border-slate-500 transition-all text-sm font-medium text-slate-300 hover:text-white group";
-                    a.innerHTML = `<i data-lucide="${l.icon}" class="w-4 h-4 text-slate-400 group-hover:text-brand-accent transition-colors"></i> ${l.label}`;
+                    a.className = "flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-800/40 hover:bg-slate-700/60 border border-slate-700/50 hover:border-brand-accent transition-all text-sm font-medium text-slate-300 hover:text-white group shadow-sm";
+                    a.innerHTML = `<i data-lucide="${l.icon}" class="w-4 h-4 text-slate-400 group-hover:text-brand-accent transition-colors"></i> <span class="truncate max-w-[180px]">${url.replace(/^https?:\/\//, '')}</span>`;
                     el.resSocialLinks.appendChild(a);
                 }
             });
@@ -627,9 +648,17 @@ Return data strictly in JSON format. Do not hallucinate.
                 el.resServices.appendChild(div);
             });
 
-            // Sale Blurb
+            // Sale Blurb Setup & Formatting
             currentSaleBlurb = data.saleBlurb;
-            el.resSaleBlurb.textContent = currentSaleBlurb;
+            
+            // Format for UI (Make links clickable and bold text visible)
+            let displayBlurb = escapeHtml(currentSaleBlurb);
+            // Replace URLs with clickable anchors
+            displayBlurb = displayBlurb.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
+            // Support Markdown bold (**)
+            displayBlurb = displayBlurb.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            el.resSaleBlurb.innerHTML = displayBlurb;
 
             lucide.createIcons();
             el.resultsContainer.classList.remove('hidden');
@@ -653,6 +682,8 @@ Return data strictly in JSON format. Do not hallucinate.
         // Copy functionality
         el.copyBtn.addEventListener('click', () => {
             if (!currentSaleBlurb) return;
+            
+            // Copy plain text, not HTML
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(currentSaleBlurb).then(showCopySuccess);
             } else {
@@ -671,7 +702,7 @@ Return data strictly in JSON format. Do not hallucinate.
             el.copyIcon.setAttribute('data-lucide', 'check');
             lucide.createIcons();
             setTimeout(() => {
-                el.copyText.textContent = 'Copy Blurb';
+                el.copyText.textContent = 'Copy Text';
                 el.copyIcon.setAttribute('data-lucide', 'copy');
                 lucide.createIcons();
             }, 2000);
