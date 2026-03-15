@@ -88,6 +88,15 @@
             color: #ffffff;
             font-weight: 700;
         }
+
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #00E5FF;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #00E5FF;
+        }
     </style>
 </head>
 <body class="min-h-screen font-sans antialiased selection:bg-brand-accent/30 selection:text-white flex flex-col">
@@ -139,9 +148,20 @@
             <h2 class="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight leading-tight">
                 Data-Driven <br/> <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-accent to-blue-500">Signal-Based Selling.</span>
             </h2>
-            <p class="text-slate-400 mb-10 text-lg max-w-2xl mx-auto font-medium">
+            <p class="text-slate-400 mb-8 text-lg max-w-2xl mx-auto font-medium">
                 Input a Web3 project link. Our AI Strategist will forensically analyze their vulnerabilities across 5 dimensions and generate a hyper-personalized outreach blurb.
             </p>
+
+            <!-- Toggle Search Mode -->
+            <div class="flex items-center justify-center gap-3 mb-6">
+                <label class="relative inline-flex items-center cursor-pointer group">
+                    <input type="checkbox" id="useSearchToggle" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5">
+                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Bật Deep Search (Tốn Quota, dễ lỗi 429)
+                    </span>
+                </label>
+            </div>
 
             <div class="glass-panel p-2 rounded-2xl flex flex-col md:flex-row gap-2 relative z-10">
                 <div class="relative flex-1 flex items-center bg-brand-dark/50 rounded-xl overflow-hidden border border-transparent focus-within:border-brand-accent/50 transition-colors">
@@ -169,9 +189,14 @@
 
             <div id="errorContainer" class="hidden mt-6 mx-auto max-w-2xl text-left glass-panel border-red-500/30 p-4 rounded-xl flex items-start gap-3">
                 <i data-lucide="triangle-alert" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
-                <div>
+                <div class="flex-1">
                     <p id="errorMessage" class="text-red-400 font-semibold"></p>
                     <p id="errorSubMessage" class="text-slate-400 text-sm mt-1"></p>
+                    <div id="errorAction" class="mt-3 hidden">
+                        <button onclick="document.getElementById('useSearchToggle').click();" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/30 transition-colors">
+                            Tắt Deep Search và thử lại ngay
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -194,8 +219,8 @@
                         </p>
                         
                         <!-- AI Verification Log Snippet -->
-                        <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> URLs strictly verified via real-time search operators
+                        <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10" id="resLogContainer">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Đã quét và phân tích</span>
                         </div>
                     </div>
                     
@@ -295,6 +320,7 @@
             apiKey: document.getElementById('apiKeyInput'),
             modelSelect: document.getElementById('modelSelect'),
             modelIcon: document.getElementById('modelSelectIcon'),
+            useSearchToggle: document.getElementById('useSearchToggle'),
             analyzeBtn: document.getElementById('analyzeBtn'),
             analyzeText: document.getElementById('analyzeText'),
             loadingState: document.getElementById('loadingState'),
@@ -302,11 +328,14 @@
             errorContainer: document.getElementById('errorContainer'),
             errorMessage: document.getElementById('errorMessage'),
             errorSubMessage: document.getElementById('errorSubMessage'),
+            errorAction: document.getElementById('errorAction'),
             resultsContainer: document.getElementById('resultsContainer'),
             
             resProjectName: document.getElementById('resProjectName'),
             resStage: document.getElementById('resStage'),
             resSummary: document.getElementById('resSummary'),
+            resLogContainer: document.getElementById('resLogContainer'),
+            resLogText: document.getElementById('resLogText'),
             resSocialLinks: document.getElementById('resSocialLinks'),
             resScores: document.getElementById('resScores'),
             resPainPoints: document.getElementById('resPainPoints'),
@@ -362,10 +391,8 @@
         el.targetUrl.addEventListener('keypress', e => { if (e.key === 'Enter') handleAnalyze(); });
         el.analyzeBtn.addEventListener('click', handleAnalyze);
 
-        // API Call with Exact Retry Logic
-        async function fetchWithRetry(url, options, attemptSearch = true, retries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            
+        // Fetch with specific Error Handlings
+        async function fetchAI(url, options, attemptSearch) {
             let payload = JSON.parse(options.body);
             if (attemptSearch) {
                 payload.tools = [{ google_search: {} }];
@@ -374,51 +401,35 @@
             }
             options.body = JSON.stringify(payload);
 
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    
-                    if (!response.ok) {
-                        if (response.status === 401 || response.status === 403) {
-                            throw new Error(`[LỖI 401] Phiên làm việc mặc định đã hết hạn. Vui lòng thiết lập API Key riêng của bạn để tiếp tục.`);
-                        }
-                        const errText = await response.text();
-                        let errData;
-                        try { errData = JSON.parse(errText); } catch (e) { errData = { error: { message: errText } }; }
-                        const errorMsg = errData.error?.message || `HTTP Error: ${response.status}`;
-                        
-                        // Retry without tools if tools are not supported
-                        if (attemptSearch && (errorMsg.toLowerCase().includes('tool') || errorMsg.toLowerCase().includes('not supported') || errorMsg.toLowerCase().includes('google_search'))) {
-                            console.warn(`Model rejected search tool. Retrying without search...`);
-                            return await fetchWithRetry(url, options, false, retries);
-                        }
-
-                        if (response.status === 429 || errorMsg.toLowerCase().includes('quota')) {
-                            throw new Error("Quota Exceeded. Please select a different model or upgrade your tier.");
-                        }
-
-                        throw new Error(errorMsg);
-                    }
-                    return await response.json();
-                } catch (error) {
-                    if (error.message.includes("LỖI 401")) throw error;
-                    if (error.message.includes("Quota Exceeded")) throw error;
-                    if (i === retries - 1) throw error;
-                    console.warn(`Attempt ${i + 1} failed, retrying in ${delays[i]}ms...`, error);
-                    await new Promise(res => setTimeout(res, delays[i]));
+            const response = await fetch(url, options);
+            
+            if (!response.ok) {
+                const errText = await response.text();
+                let errData;
+                try { errData = JSON.parse(errText); } catch (e) { errData = { error: { message: errText } }; }
+                const errorMsg = errData.error?.message || `HTTP Error: ${response.status}`;
+                
+                if (response.status === 429 || errorMsg.toLowerCase().includes('quota')) {
+                    throw new Error("QUOTA_EXCEEDED");
                 }
+                if (attemptSearch && (errorMsg.toLowerCase().includes('tool') || errorMsg.toLowerCase().includes('not supported') || errorMsg.toLowerCase().includes('google_search'))) {
+                    throw new Error("TOOL_NOT_SUPPORTED");
+                }
+                throw new Error(errorMsg);
             }
+            return await response.json();
         }
 
         async function handleAnalyze() {
             const targetUrl = el.targetUrl.value.trim();
             const apiKey = el.apiKey.value.trim();
+            const useSearch = el.useSearchToggle.checked;
 
             hideError();
             el.resultsContainer.classList.add('hidden');
             
-            if (!targetUrl) return showError('Missing Project Info', 'Please enter a valid Website or Twitter link.');
-            if (!apiKey) return showError('Missing API Key', 'Please enter your Gemini API Key in the top right.');
+            if (!targetUrl) return showError('Thiếu thông tin dự án', 'Vui lòng nhập link Website hoặc Twitter.');
+            if (!apiKey) return showError('Thiếu API Key', 'Vui lòng dán Gemini API Key ở góc trên bên phải.');
 
             // UI Loading State
             el.analyzeBtn.disabled = true;
@@ -444,20 +455,18 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = "Deep Scraping & Verifying URLs...";
+                el.loadingMessage.textContent = useSearch ? "Deep Scraping URLs..." : "Phân tích bằng trí nhớ AI...";
 
-                // --- PROMPT SIÊU NGHIÊM NGẶT VỀ URL ---
+                // --- SYSTEM PROMPT ---
                 const systemPrompt = `
-YOU MUST USE THE GOOGLE SEARCH TOOL TO VERIFY ALL INFORMATION BEFORE GENERATING JSON.
-You are an Elite Web3 Revenue Operations Strategist and a Master Data Scraper for Spores Network.
+You are an Elite Web3 Revenue Operations Strategist and Data Analyst for Spores Network.
+Your mandate is to conduct a forensic, data-driven analysis of the target Web3 project.
 
-CRITICAL ANTI-HALLUCINATION PROTOCOL (READ CAREFULLY):
+CRITICAL ANTI-HALLUCINATION PROTOCOL:
 You are strictly forbidden from guessing, fabricating, or assuming ANY URLs.
-1. If the input is an X/Twitter link: You MUST search Google for that exact profile and read its Bio/Linktree to find the EXACT website domain (e.g. check if it's .net, .io, .com). DO NOT assume the domain.
-2. If the input is a Website: You MUST search Google for the website domain to find their official X/Twitter handle.
-3. For Discord: You MUST search "site:discord.com/invite [Project Name]". If you don't find a working invite link in the search snippets, output "N/A". NEVER output placeholder links like "discord.gg/projectname".
-4. For Telegram: You MUST search "site:t.me [Project Name]". If not found in snippets, output "N/A".
-5. To prove you didn't hallucinate, you MUST log your exact search queries and findings in the 'verificationLog' array.
+If you are completely unsure about an official URL (Twitter, Discord, Website, Telegram), output exactly "N/A".
+Do NOT output fake links like "discord.gg/projectname".
+If the user provides an exact URL in the prompt, extract and use that exact URL.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -508,22 +517,23 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                // Cập nhật User Query ép chạy lệnh Search
-                const userQuery = `Target Project: ${targetUrl}
-
-MANDATORY FIRST STEP - EXECUTE THESE EXACT SEARCHES BEFORE ANSWERING:
+                let userQuery = `Target Project: ${targetUrl}\n`;
+                if (useSearch) {
+                    userQuery += `\nMANDATORY FIRST STEP - USE SEARCH TOOL TO VERIFY LINKS:
 1. If ${targetUrl} is a website, search: "[Website Name] official twitter"
 2. If ${targetUrl} is a twitter, search: "[Twitter Handle] official website"
 3. Search: "site:discord.com/invite [Project Name]"
 4. Search: "site:t.me [Project Name]"
-
-Only after verifying these exact links via search snippets should you proceed to score the dimensions and write the blurb. Do not hallucinate links!`;
+Log your findings in verificationLog. Do not hallucinate!`;
+                } else {
+                    userQuery += `\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
+                }
 
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: 0.1, // Nhiệt độ cực thấp để cấm AI sáng tạo số liệu/URL
+                        temperature: useSearch ? 0.1 : 0.4,
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
@@ -531,18 +541,18 @@ Only after verifying these exact links via search snippets should you proceed to
                                 verificationLog: {
                                     type: "ARRAY",
                                     items: { type: "STRING" },
-                                    description: "Mandatory: Step-by-step log of what domains/social links you found via search to prevent hallucinations."
+                                    description: "Log of how you found the data."
                                 },
                                 projectName: { type: "STRING" },
                                 summary: { type: "STRING" },
-                                currentStage: { type: "STRING", description: "e.g., Pre-TGE, Mainnet, Testnet" },
+                                currentStage: { type: "STRING" },
                                 socialLinks: {
                                     type: "OBJECT",
                                     properties: {
-                                        website: { type: "STRING", description: "Verified Website URL. If not explicitly verified, output N/A." },
-                                        twitter: { type: "STRING", description: "Verified Twitter URL. If not explicitly verified, output N/A." },
-                                        telegram: { type: "STRING", description: "Verified Telegram URL. If not explicitly verified, output N/A." },
-                                        discord: { type: "STRING", description: "Verified Discord Invite URL. If not explicitly verified, output N/A." }
+                                        website: { type: "STRING" },
+                                        twitter: { type: "STRING" },
+                                        telegram: { type: "STRING" },
+                                        discord: { type: "STRING" }
                                     }
                                 },
                                 scores: {
@@ -550,7 +560,7 @@ Only after verifying these exact links via search snippets should you proceed to
                                     items: {
                                         type: "OBJECT",
                                         properties: {
-                                            dimensionCode: { type: "STRING", description: "e.g., B, C, D, E, A" },
+                                            dimensionCode: { type: "STRING" },
                                             dimensionName: { type: "STRING" },
                                             score: { type: "INTEGER" },
                                             reason: { type: "STRING" }
@@ -577,24 +587,49 @@ Only after verifying these exact links via search snippets should you proceed to
 
                 const endpoint = `https://generativelanguage.googleapis.com/v1beta/${selectedModel}:generateContent?key=${apiKey}`;
                 
-                const data = await fetchWithRetry(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }, true);
+                let data;
+                try {
+                    data = await fetchAI(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }, useSearch);
+                } catch (apiError) {
+                    if (apiError.message === "QUOTA_EXCEEDED") {
+                        if (useSearch) {
+                            throw new Error("API Key đã hết hạn mức do dùng Deep Search. Hãy TẮT Deep Search ở nút bên trên để dùng chế độ phân tích siêu nhẹ (không giới hạn).");
+                        } else {
+                            throw new Error("API Key đã cạn kiệt hoàn toàn hạn mức. Vui lòng chọn Model khác (ví dụ: gemini-1.5-flash-8b) ở góc phải để tiếp tục.");
+                        }
+                    }
+                    if (apiError.message === "TOOL_NOT_SUPPORTED") {
+                        console.warn("Model không hỗ trợ Tool. Tự động chạy chế độ Lite.");
+                        data = await fetchAI(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        }, false); // Fallback to no search
+                    } else {
+                        throw apiError;
+                    }
+                }
 
                 const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (textOutput) {
                     const resultData = JSON.parse(textOutput);
-                    displayResults(resultData);
-                    console.log("Verification Log:", resultData.verificationLog); // Log để kiểm tra AI search ra gì
+                    displayResults(resultData, useSearch);
                 } else {
                     throw new Error('Failed to parse AI output. Try again.');
                 }
 
             } catch (err) {
                 console.error(err);
+                if(err.message.includes("TẮT Deep Search")) {
+                    el.errorAction.classList.remove('hidden');
+                } else {
+                    el.errorAction.classList.add('hidden');
+                }
                 showError("Analysis Failed", err.message);
             } finally {
                 el.analyzeBtn.disabled = false;
@@ -604,11 +639,19 @@ Only after verifying these exact links via search snippets should you proceed to
             }
         }
 
-        function displayResults(data) {
+        function displayResults(data, useSearch) {
             // Header Info
             el.resProjectName.textContent = data.projectName;
             el.resStage.textContent = data.currentStage || "UNKNOWN STAGE";
             el.resSummary.textContent = data.summary;
+            
+            if (useSearch) {
+                el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10";
+                el.resLogText.textContent = "URLs verified via Live Search Operators";
+            } else {
+                el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-amber-400/80 bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-500/10";
+                el.resLogText.textContent = "Fast Mode: Verified via AI Memory (No Live Search)";
+            }
             
             // Social Links Generation
             el.resSocialLinks.innerHTML = '';
@@ -725,6 +768,7 @@ Only after verifying these exact links via search snippets should you proceed to
 
         function hideError() {
             el.errorContainer.classList.add('hidden');
+            el.errorAction.classList.add('hidden');
         }
 
         // Copy functionality
