@@ -428,10 +428,11 @@ You are an Elite Web3 Revenue Operations Strategist, acting as a hyper-intellige
 Your mandate is to conduct a forensic, data-driven analysis of the target Web3 project using provided links/search.
 Bypass superficial marketing claims. Dig into social graph, community health, and institutional credibility.
 
-Data Extraction Requirements:
-- Extract verifiable social/documentation links (Website, X/Twitter, Telegram, Discord).
-- CRITICAL RULE: DO NOT guess or hallucinate URLs. If you cannot find the EXACT official link via search, output "N/A".
-- CRITICAL RULE: If the user provides an exact URL in the input (e.g., a Twitter link), you MUST extract and return that exact URL in the corresponding field (e.g., socialLinks.twitter). DO NOT change it.
+Data Extraction Requirements (CRITICAL ANTI-HALLUCINATION PROTOCOL):
+1. USE GOOGLE SEARCH to verify the specific link provided by the user. If the user provides a Twitter link (e.g., x.com/YOMofficial), you MUST search for that exact Twitter profile's bio to find their actual official Website, Linktree, or Discord.
+2. DO NOT rely on outdated pre-trained memory. Always cross-reference the website domain (e.g., check if it's .net, .io, .xyz) by seeing what is officially linked on their current active Twitter/X page.
+3. NEVER guess or hallucinate generic links (like "discord.gg/projectname" or "t.me/projectname"). If you cannot explicitly verify the exact live URL from their official sources, you MUST output "N/A".
+4. If the user provides an exact URL in the input (e.g., a Twitter link), you MUST extract and return that exact URL in the corresponding field (e.g., socialLinks.twitter). DO NOT change it.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -482,13 +483,14 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return data strictly in JSON format. Do not hallucinate.
                 `;
 
-                const userQuery = `Target Project: ${targetUrl}`;
+                // Cập nhật User Query để ép buộc AI dùng Tool Search
+                const userQuery = `Target Project: ${targetUrl}\n\nINSTRUCTION: Before returning JSON, you MUST use Google Search to look up the provided link (especially if it's a Twitter profile) to extract the EXACT official website domain (e.g. check if it's .net, .com or .io) and official community links from their bio/Linktree. Do not hallucinate.`;
 
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: 0.6,
+                        temperature: 0.3, // Giảm temperature xuống để AI bớt sáng tạo/chế số liệu
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
