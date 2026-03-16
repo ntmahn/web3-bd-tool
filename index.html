@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spores Intel | Elite Web3 BD Strategist</title>
     
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Tailwind Config for Premium Web3 Look -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -41,7 +38,6 @@
         }
     </script>
 
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -101,7 +97,6 @@
 </head>
 <body class="min-h-screen font-sans antialiased selection:bg-brand-accent/30 selection:text-white flex flex-col">
 
-    <!-- Navbar -->
     <header class="sticky top-0 z-50 glass-panel border-b-0 border-brand-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
@@ -141,7 +136,6 @@
 
     <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
-        <!-- Hero / Input Section -->
         <div class="max-w-4xl mx-auto mb-16 text-center relative">
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-brand-accent/20 blur-[100px] rounded-full pointer-events-none"></div>
             
@@ -152,33 +146,43 @@
                 Input a Web3 project Website. Our AI Strategist will exhaustively scan the site's DOM to extract verified links, analyze vulnerabilities, and generate a personalized blurb.
             </p>
 
-            <!-- Toggle Search Mode -->
             <div class="flex items-center justify-center gap-3 mb-6">
                 <label class="relative inline-flex items-center cursor-pointer group">
                     <input type="checkbox" id="useSearchToggle" class="sr-only peer" checked>
                     <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
-                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Grounding để truy cập và đọc trực tiếp mã nguồn website dự án.">
-                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Exhaustive Web Scraper (Ép AI đọc mã nguồn Web)
+                    <span class="ml-3 text-sm font-medium text-slate-300 group-hover:text-white transition-colors flex items-center gap-1.5" title="Sử dụng Google Grounding để truy xuất liên kết">
+                        <i data-lucide="radar" class="w-4 h-4 text-brand-accent"></i> Chế độ Deep Search (Tìm kiếm Social Links)
                     </span>
                 </label>
             </div>
 
-            <div class="glass-panel p-2 rounded-2xl flex flex-col md:flex-row gap-2 relative z-10">
-                <div class="relative flex-1 flex items-center bg-brand-dark/50 rounded-xl overflow-hidden border border-transparent focus-within:border-brand-accent/50 transition-colors">
+            <div class="glass-panel p-4 rounded-2xl flex flex-col gap-3 relative z-10">
+                <div class="relative w-full flex items-center bg-brand-dark/50 rounded-xl overflow-hidden border border-brand-border focus-within:border-brand-accent/50 transition-colors">
                     <i data-lucide="scan-line" class="ml-4 w-5 h-5 text-brand-accent"></i>
                     <input
                         type="text"
                         id="targetUrl"
-                        placeholder="e.g. https://www.kimanilife.com/ (Ưu tiên nhập link Website)"
+                        placeholder="e.g. https://www.kimanilife.com/"
                         class="w-full bg-transparent py-4 px-4 text-white placeholder-slate-600 focus:outline-none text-base"
                     />
                 </div>
+                
+                <div class="relative w-full flex items-start bg-brand-dark/50 rounded-xl overflow-hidden border border-brand-border focus-within:border-brand-purple/50 transition-colors">
+                    <i data-lucide="message-square-text" class="ml-4 mt-4 w-5 h-5 text-brand-purple shrink-0"></i>
+                    <textarea
+                        id="clientNeeds"
+                        rows="3"
+                        placeholder="Thông tin bổ sung / Nhu cầu khách hàng (Tùy chọn): VD: 'Sắp launch token tháng sau, ngân sách $50k, đang rất cần KOLs đẩy sóng...'"
+                        class="w-full bg-transparent py-4 px-4 text-white placeholder-slate-600 focus:outline-none text-base resize-none"
+                    ></textarea>
+                </div>
+
                 <button
                     id="analyzeBtn"
-                    class="bg-white hover:bg-slate-100 text-brand-dark font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 min-w-[180px] disabled:opacity-50 disabled:cursor-not-allowed group"
+                    class="w-full bg-white hover:bg-slate-100 text-brand-dark font-bold py-4 px-8 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group mt-1"
                 >
                     <span id="analyzeText" class="flex items-center gap-2">
-                        Run Audit <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        Run Personalized Audit <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
                     </span>
                     <span id="loadingState" class="hidden items-center gap-2 text-sm font-bold">
                         <div class="w-4 h-4 border-2 border-brand-dark/30 border-t-brand-dark rounded-full animate-spin"></div>
@@ -201,10 +205,8 @@
             </div>
         </div>
 
-        <!-- Dashboard Results -->
         <div id="resultsContainer" class="hidden space-y-8 animate-[fadeIn_0.5s_ease-out]">
             
-            <!-- Section 1: Overview & Socials -->
             <div class="glass-panel rounded-3xl p-6 lg:p-8 relative overflow-hidden">
                 <div class="absolute -top-24 -right-24 w-64 h-64 bg-brand-purple/10 blur-[80px] rounded-full"></div>
                 
@@ -218,22 +220,19 @@
                             Project summary goes here...
                         </p>
                         
-                        <!-- AI Verification Log Snippet -->
                         <div class="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10" id="resLogContainer">
                             <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> <span id="resLogText">Multi-Source Verification Completed</span>
                         </div>
                     </div>
                     
-                    <!-- Social Links dynamically injected here -->
                     <div class="lg:w-72 flex flex-col gap-3 justify-center border-t lg:border-t-0 lg:border-l border-brand-border pt-6 lg:pt-0 lg:pl-8" id="resSocialLinks">
-                        <!-- Links generated by JS -->
+                        <!-- Social links will be injected here -->
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                <!-- Section 2: Scorecard (Dimensions) -->
                 <div class="lg:col-span-5 glass-panel rounded-3xl p-6 lg:p-8 flex flex-col">
                     <div class="flex items-center gap-3 mb-6">
                         <i data-lucide="activity" class="w-6 h-6 text-brand-purple"></i>
@@ -241,25 +240,22 @@
                     </div>
                     
                     <div class="space-y-6 flex-grow" id="resScores">
-                        <!-- Scores generated by JS -->
+                        <!-- Scores will be injected here -->
                     </div>
                 </div>
 
-                <!-- Section 3: Pain Points & Services -->
                 <div class="lg:col-span-7 flex flex-col gap-8">
                     
-                    <!-- Pain Points -->
                     <div class="glass-panel rounded-3xl p-6 lg:p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <i data-lucide="crosshair" class="w-6 h-6 text-red-400"></i>
                             <h3 class="text-xl font-bold text-white">Critical Vulnerabilities (The "Pain")</h3>
                         </div>
                         <div class="grid grid-cols-1 gap-4" id="resPainPoints">
-                            <!-- Pain points generated by JS -->
+                            <!-- Pain points will be injected here -->
                         </div>
                     </div>
 
-                    <!-- Recommended Solutions -->
                     <div class="glass-panel rounded-3xl p-6 lg:p-8 border-brand-accent/30 relative overflow-hidden flex-grow">
                         <div class="absolute bottom-0 right-0 w-48 h-48 bg-brand-accent/10 blur-[60px] rounded-full"></div>
                         <div class="flex items-center gap-3 mb-6 relative z-10">
@@ -267,16 +263,14 @@
                             <h3 class="text-xl font-bold text-white">Strategic Recommendation</h3>
                         </div>
                         <div class="space-y-4 relative z-10" id="resServices">
-                            <!-- Services generated by JS -->
+                            <!-- Services will be injected here -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Section 4: The Outreach Blurb -->
             <div class="glass-panel rounded-3xl p-1 relative overflow-hidden bg-gradient-to-b from-slate-800 to-brand-dark">
                 <div class="bg-brand-card rounded-[22px] p-6 lg:p-8 relative h-full">
-                    <!-- Chat UI styling -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-brand-border pb-6">
                         <div>
                             <div class="flex items-center gap-3 mb-1">
@@ -295,13 +289,11 @@
                     </div>
                     
                     <div class="relative">
-                        <!-- Mockup Avatar -->
                         <div class="absolute -left-2 -top-2 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-brand-purple flex items-center justify-center shadow-lg hidden sm:flex border-2 border-brand-card">
                             <span class="text-white text-sm font-bold">SP</span>
                         </div>
-                        <!-- Blurb Container -->
                         <div id="resSaleBlurb" class="sm:ml-12 bg-slate-900/40 border border-slate-700/50 p-6 rounded-2xl rounded-tl-sm text-slate-300 text-[15px] leading-relaxed blurb-text font-medium font-sans shadow-inner">
-                            <!-- Blurb content here dynamically parsed -->
+                            <!-- Blurb will be injected here -->
                         </div>
                     </div>
                 </div>
@@ -310,13 +302,13 @@
         </div>
     </main>
 
-    <!-- JavaScript Logic -->
     <script>
         lucide.createIcons();
 
         // DOM Elements
         const el = {
             targetUrl: document.getElementById('targetUrl'),
+            clientNeeds: document.getElementById('clientNeeds'),
             apiKey: document.getElementById('apiKeyInput'),
             modelSelect: document.getElementById('modelSelect'),
             modelIcon: document.getElementById('modelSelectIcon'),
@@ -422,6 +414,7 @@
 
         async function handleAnalyze() {
             const targetUrl = el.targetUrl.value.trim();
+            const clientNeeds = el.clientNeeds.value.trim();
             const apiKey = el.apiKey.value.trim();
             const useSearch = el.useSearchToggle.checked;
 
@@ -455,22 +448,20 @@
                     el.modelIcon.classList.remove('hidden');
                 }
 
-                el.loadingMessage.textContent = useSearch ? "Exhaustively Scanning Website..." : "Phân tích bằng trí nhớ AI...";
+                el.loadingMessage.textContent = useSearch ? "Exhaustively Scanning Footprints..." : "Phân tích bằng trí nhớ AI...";
 
-                // --- SYSTEM PROMPT: KỶ LUẬT THÉP VỀ QUÉT WEBSITE & TRÍCH XUẤT ---
                 const systemPrompt = `
-You are an Elite Web3 Revenue Operations Strategist and an AGGRESSIVE WEB SCRAPER for Spores Network.
-Your ultimate core capability is to fetch, read, and extract data from websites precisely.
+You are an Elite Web3 Revenue Operations Strategist and an AGGRESSIVE DATA MINER for Spores Network.
+Your ultimate core capability is to extract official social footprints of websites and provide hyper-personalized BD strategies based on client needs.
 
 CRITICAL DATA EXTRACTION PROTOCOL (ZERO GUESSING TOLERATED):
-1. EXHAUSTIVE PAGE SCAN: When the user provides a Website URL, you MUST use your browsing/search capabilities to access and READ THE EXACT PAGE CONTENT of that URL. The social links (Twitter, Discord, Telegram) are almost always in the header, footer, or "Community" sections.
-2. EXTRACT, DO NOT INVENT: Scan the retrieved content specifically for 'href' targets or raw text containing:
-   - "x.com/" or "twitter.com/"
-   - "t.me/" or "telegram.me/"
-   - "discord.gg/" or "discord.com/invite/"
-3. NO LAZY "N/A"s: If the user gave you a website, do NOT immediately default to "N/A" without thoroughly scanning the URL. It is a critical failure if you say "N/A" when the link actually exists on the page.
-4. MULTI-SOURCE FALLBACK: ONLY if the website is completely inaccessible or truly hides the links behind unreadable JS, you MUST fallback to searching Google for "[Project Name] official links site:linktr.ee OR site:cryptorank.io OR site:rootdata.com".
-5. DO NOT HALLUCINATE: You must extract the full URL EXACTLY as it appears. Do not guess it. Do not format it yourself.
+1. EXHAUSTIVE FOOTPRINT SCAN: When given a URL, you MUST use the Google Search tool to find their official social links (Twitter, Telegram, Discord).
+2. SEARCH STRATEGY: Do not just try to "browse" the page if it fails. You must actively search using queries like:
+   - "site:TARGET_URL twitter OR x.com"
+   - "site:TARGET_URL telegram OR t.me"
+   - "site:TARGET_URL discord OR discord.gg"
+   - "TARGET_PROJECT_NAME official links site:linktr.ee"
+3. EXTRACT EXACTLY: Return the exact full URLs (e.g., https://x.com/kimanilife). Do NOT return "N/A" unless you have exhaustively searched and found absolutely nothing.
 
 Evaluate across 5 distinct dimensions (Score 0-10). 
 Scoring Scale: 0-3 (Critical Vulnerability/High Need), 4-7 (Moderate Need), 8-10 (Perfect Health/Low Need).
@@ -481,16 +472,20 @@ IMPORTANT PRIORITY:
 ► Priority 4 - Dimension E: Institutional Credibility (Target: PR Booking)
 ► Priority 5 - Dimension A: Tokenomics Health (Target: Staking Pool)
 
-Analyze the data, identify the Top 1-3 Critical "Pain Points".
-Match the vulnerabilities to our Exact Packages:
+Analyze the data AND the provided "Client Needs/Context". Identify the Top Critical "Pain Points". 
+For EACH pain point, you MUST provide a specific, data-backed 'reason' why it is a pain point based on your scan or the client's context.
+
+Match the vulnerabilities and client needs to our Exact Packages. You MUST provide exactly 5 to 6 distinct recommended solutions/services, ordered by Priority (e.g., Priority 1 is the most urgent). 
+Our Core Services:
 1. STAKING POOL
 2. User growth-hacking & community management
 3. Top tiers KOL activation & shilling
 4. Viral & brand marketing campaign
 5. PR booking & distribution across top media
+6. Marketing advisory & GTM strategy
 
 GENERATE ELITE OUTREACH BLURB:
-Using the pain points identified, generate a highly personalized B2B cold outreach copy based EXACTLY on this template.
+Using the pain points identified AND the client's specific needs, generate a highly personalized B2B cold outreach copy based EXACTLY on this template. Make it feel personalized to their exact situation.
 CRITICAL FORMATTING INSTRUCTION: Use clear spacing between paragraphs.
 
 Template structure to follow strictly:
@@ -511,7 +506,7 @@ We've been empowering Web3 projects for 8+ years, supporting $40M+ in fundraisin
 - PR booking & distribution across top media
 
 We noticed that while your [Mention a positive aspect/strength of their project], you might be facing challenges with [Mention Pain point 1] and [Mention Pain point 2]. 
-We are connecting with [Project Name] to launch a tailored marketing campaign focusing on [Insert Primary Recommended Service] and [Insert Secondary Recommended Service] in order to support your upcoming growth phase.
+Especially considering your current focus on [Reference Client Needs context if provided, else reference their project stage], we are connecting with [Project Name] to launch a tailored marketing campaign focusing on [Insert Primary Recommended Service] and [Insert Secondary Recommended Service] in order to support your upcoming growth phase.
 
 Should I share more details or do you prefer to schedule a call to discuss more?
 
@@ -521,28 +516,29 @@ Should I share more details or do you prefer to schedule a call to discuss more?
 Return strictly JSON matching the required schema.
                 `;
 
-                let userQuery = "";
-                if (useSearch) {
-                    userQuery += `VISIT AND READ THIS EXACT URL: ${targetUrl}
+                let userQuery = `Target Website: ${targetUrl}\n`;
+                if (clientNeeds) {
+                    userQuery += `Client Needs & Context: ${clientNeeds}\n\n`;
+                }
 
-CRITICAL EXTRACTION DIRECTIVE (READ CAREFULLY):
-1. BROWSE THE EXACT URL: You MUST use your tools to access and deeply read the actual content/source of ${targetUrl}. Do NOT just rely on Google search snippets. Read the website's headers and footers.
-2. REGEX-LIKE SCAN: Scan the entire page content for ANY URLs containing:
-   - "x.com/" or "twitter.com/"
-   - "t.me/" or "telegram.me/"
-   - "discord.gg/" or "discord.com/invite/"
-3. FALLBACK: Only if the website completely blocks you, search "[Project Name] official links site:linktr.ee OR site:cryptorank.io OR site:rootdata.com".
-4. EXTRACT EXACTLY WHAT YOU SEE. DO NOT GUESS.
-Log the exact URLs you extracted and where you found them (e.g. "Found in website footer") in verificationLog.`;
+                if (useSearch) {
+                    userQuery += `CRITICAL SEARCH DIRECTIVE (DO THIS FIRST):
+1. Use your Google Search tool to find the official Twitter (X), Telegram, and Discord links associated with ${targetUrl}.
+2. Execute searches such as:
+   - "site:${targetUrl} twitter OR discord OR telegram"
+   - "${targetUrl} official twitter link"
+   - Check their "Contact Us" or Footer footprint.
+3. Extract the exact valid links. If truly not found after multiple search attempts, leave as "".
+Log your exact search queries and where you found the links in verificationLog.`;
                 } else {
-                    userQuery += `Target Project: ${targetUrl}\nNOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "N/A".`;
+                    userQuery += `NOTE: You are operating in Lite Mode (No live search). Rely strictly on your vast training data. Log "Search Disabled - Relied on Memory" in verificationLog. If you don't know the exact social link, put "".`;
                 }
 
                 const payload = {
                     contents: [{ parts: [{ text: userQuery }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: {
-                        temperature: useSearch ? 0.2 : 0.4, // Nhiệt độ 0.2 giúp AI không quá cứng nhắc mà bỏ qua việc đọc website
+                        temperature: useSearch ? 0.3 : 0.5, 
                         responseMimeType: "application/json",
                         responseSchema: {
                             type: "OBJECT",
@@ -550,7 +546,7 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
                                 verificationLog: {
                                     type: "ARRAY",
                                     items: { type: "STRING" },
-                                    description: "Log of what URLs you explicitly found and WHERE. E.g. 'Scanned website homepage footer, extracted exact Twitter: https://x.com/Kimani_Life'"
+                                    description: "Log of what you searched and found. E.g. 'Searched site:kimanilife.com twitter, found https://x.com/kimanilife'"
                                 },
                                 projectName: { type: "STRING" },
                                 summary: { type: "STRING" },
@@ -576,12 +572,22 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
                                         }
                                     }
                                 },
-                                painPoints: { type: "ARRAY", items: { type: "STRING" } },
+                                painPoints: { 
+                                    type: "ARRAY", 
+                                    items: { 
+                                        type: "OBJECT",
+                                        properties: {
+                                            point: { type: "STRING" },
+                                            reason: { type: "STRING" }
+                                        }
+                                    } 
+                                },
                                 recommendedServices: {
                                     type: "ARRAY",
                                     items: {
                                         type: "OBJECT",
                                         properties: {
+                                            priority: { type: "STRING" },
                                             serviceName: { type: "STRING" },
                                             rationale: { type: "STRING" }
                                         }
@@ -657,7 +663,7 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
             
             if (useSearch) {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-400/80 bg-emerald-950/30 px-3 py-1.5 rounded-lg border border-emerald-500/10";
-                el.resLogText.textContent = "Exhaustive Web Scan Completed";
+                el.resLogText.textContent = "Deep Search Scan Completed";
             } else {
                 el.resLogContainer.className = "mt-4 inline-flex items-center gap-2 text-xs font-mono text-amber-400/80 bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-500/10";
                 el.resLogText.textContent = "Fast Mode: Verified via AI Memory (No Live Search)";
@@ -686,7 +692,6 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
 
             // Scorecard Generation
             el.resScores.innerHTML = '';
-            // Ensure priority ordering roughly maps to user's prompt (B, C, D, E, A)
             data.scores.forEach(s => {
                 let colorClass = 'bg-red-500 shadow-red-500/50';
                 let textColor = 'text-red-400';
@@ -719,12 +724,15 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
 
             // Pain Points
             el.resPainPoints.innerHTML = '';
-            data.painPoints.forEach(point => {
+            data.painPoints.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'flex items-start gap-3 bg-red-500/5 p-4 rounded-xl border border-red-500/20';
                 div.innerHTML = `
                     <i data-lucide="alert-octagon" class="w-5 h-5 text-red-400 shrink-0 mt-0.5"></i>
-                    <span class="text-slate-300 text-sm leading-relaxed">${escapeHtml(point)}</span>
+                    <div>
+                        <span class="block text-white font-bold text-sm mb-1">${escapeHtml(p.point || p)}</span>
+                        ${p.reason ? `<span class="text-slate-400 text-sm leading-relaxed">${escapeHtml(p.reason)}</span>` : ''}
+                    </div>
                 `;
                 el.resPainPoints.appendChild(div);
             });
@@ -732,13 +740,18 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
             // Services
             el.resServices.innerHTML = '';
             data.recommendedServices.forEach((srv, idx) => {
+                let pBadgeColor = idx === 0 ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                  idx === 1 ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                                  'bg-brand-accent/20 text-brand-accent border-brand-accent/30';
+                const pLabel = srv.priority || `Ưu tiên ${idx + 1}`;
+
                 const div = document.createElement('div');
                 div.className = 'bg-brand-dark/40 border border-brand-accent/20 rounded-xl p-4 hover:border-brand-accent/60 transition-colors relative overflow-hidden group';
                 div.innerHTML = `
                     <div class="absolute top-0 left-0 w-1 h-full bg-brand-accent opacity-50 group-hover:opacity-100 transition-opacity"></div>
                     <div class="pl-3">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-brand-accent/20 text-brand-accent text-xs font-bold">${idx + 1}</span>
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span class="flex items-center justify-center px-2 py-0.5 rounded-md border ${pBadgeColor} text-[10px] font-black uppercase tracking-wider">${escapeHtml(pLabel)}</span>
                             <h4 class="font-bold text-white text-sm tracking-wide uppercase">${escapeHtml(srv.serviceName)}</h4>
                         </div>
                         <p class="text-sm text-slate-400">
@@ -751,12 +764,8 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
 
             // Sale Blurb Setup & Formatting
             currentSaleBlurb = data.saleBlurb;
-            
-            // Format for UI (Make links clickable and bold text visible)
             let displayBlurb = escapeHtml(currentSaleBlurb);
-            // Replace URLs with clickable anchors
             displayBlurb = displayBlurb.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
-            // Support Markdown bold (**)
             displayBlurb = displayBlurb.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             
             el.resSaleBlurb.innerHTML = displayBlurb;
@@ -764,7 +773,6 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
             lucide.createIcons();
             el.resultsContainer.classList.remove('hidden');
             
-            // Scroll to results smoothly
             setTimeout(() => {
                 el.resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
@@ -784,8 +792,6 @@ Log the exact URLs you extracted and where you found them (e.g. "Found in websit
         // Copy functionality
         el.copyBtn.addEventListener('click', () => {
             if (!currentSaleBlurb) return;
-            
-            // Copy plain text, not HTML
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(currentSaleBlurb).then(showCopySuccess);
             } else {
